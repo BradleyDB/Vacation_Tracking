@@ -7,20 +7,21 @@
 ## <bbazhaw, 11-18-2016, initialized project, added pseudo code and some class structure with methods>
 ##<bbazhaw, 11-19-2016, added more methods, started vacation date method loop>
 ##<bbazhaw, 11-12-2016, refined vacation date method, stared adding methods to manager class>
+##<bbazhaw, 12-27-2016, changed sub_menu_1 to static method, renamed 'Employee' variable to 'cog', changed method parameters, added new class 'employee_manifest'>
 
 ##-------------------------------------------------#
 
 import datetime
 
 class Employee():
-    def __init__(self, last_name, first_name, Id, hire_date):
-        self.employee_number=0
-        self.first_name=None
-        self.last_name=None
-        self.hire_date=None
-        self.max_vacation=12
+    def __init__(self, last_name, first_name, employee_number, hire_date, max_vacation=12):
+        self.employee_ID=employee_number
+        self.first_name=first_name
+        self.last_name=last_name
+        self.hire_date=hire_date
+        self.max_vacation=max_vacation
         self.dates_of_vacation=[]
-        self.remaining_vacation=self.max_vacation
+        self.remaining_vacation=max_vacation
 
 
     def rename_last_name(self):
@@ -64,9 +65,9 @@ class Employee():
         print("First Name: " + self.first_name)
         print("Last Name: " + self.last_name)
         print("Hire Date: " + self.hire_date)
-        print("Maximum Vacation Days this year: " + self.max_vacation)
+        print("Maximum Vacation Days this year: " + str(self.max_vacation))
         print("Dates of Vacation Taken this year: " + self.dates_of_vacation.sort(reverse=True)[0:20])
-        print("Vacation Days Remaining this year: " + self.remaining_vacation)
+        print("Vacation Days Remaining this year: " + str(self.remaining_vacation))
 
     def vacation_dates(self):
         #print("Enter in each day of vacation one at a time: \n")
@@ -180,6 +181,10 @@ class Employee():
         hire_date = datetime.date(year, month, day)
         return (hire_date)
 
+class employee_manafest():
+    employee_dict={}
+
+
 
 class Vacation_Manager():
     def __init__(self):
@@ -215,7 +220,7 @@ Exit:\tExit menu.
                 print('Not ready yet')
             elif choice == '3':
                 new_choice=input("Type a name from the list to modify their information: ").strip().title()
-                Vacation_Manager.sub_menu_1(new_choice)
+                Vacation_Manager.sub_menu_1(cog)
             elif choice == '4':
                 print('not ready')
             elif choice == '5':
@@ -225,8 +230,8 @@ Exit:\tExit menu.
             else:
                 print ('I\'m sorry Dave, I can\'t do that')
 
-    def sub_menu_1(self):#Would I want to make this a static method? I want this to go under choice 1, above
-        #and use the name/ID to be the argument for the menu below so they don't have to re-enter
+    @staticmethod
+    def sub_menu_1(cog):
         choice_1= None
         while choice_1 != "back":
             choice_1 = input('''
@@ -246,32 +251,32 @@ Back:\t Back to Main menu.
 ''').strip()
 
             if choice_1 == '1':
-                Employee.display_employee_info(Employee)
+                cog.display_employee_info()
             elif choice_1 == '2':
                 while(True):
-                    Employee.vacation_dates()
+                    cog.vacation_dates()
                     add_more=input("Type 'continue' to add more or 'back' to go to") #I want to add variable that give's first name of the employees info they've been editing
                     if add_more.lower()== 'back':
                         break
                     else:
                         continue
             elif choice_1 == '3':
-                Employee.add_vacation_day()
+                cog.add_vacation_day()
                 break
             elif choice_1 == '4':
-                Employee.add_temp_vacation_day()
+                cog.add_temp_vacation_day()
                 break
             elif choice_1 == '5':
-                Employee.remove_vacation_day()
+                cog.remove_vacation_day()
                 break
             elif choice_1 == '6':
-                Employee.remove_temp_vacation_day()
+                cog.remove_temp_vacation_day()
                 break
             elif choice_1 == '7':
-                Employee.rename_last_name()
+                cog.rename_last_name()
                 break
             elif choice_1 == '8':
-                Employee.rename_first_name()
+                cog.rename_first_name()
                 break
             elif choice_1 == 'back':
                 break
