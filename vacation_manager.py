@@ -10,8 +10,10 @@
 ##<bbazhaw, 12-27-2016, changed sub_menu_1 to static method, renamed 'Employee' variable to 'cog', changed method parameters, added new class 'employee_manifest'>
 ##<bbazhaw & DrewSauce>, 01-08-2016, abstracted what are now set_vacation_dates and get_date, added set_hire_date, changed Employee obj __str__,
 ##other minor functional improvements, data shelving, ability to create employee obj, dict to hold employee obj, cleaned up menues>
-
-##-------------------------------------------------#
+##<bbazhaw, 01/14/2017, added instance of VacationManager so that program can be called, added .items() to display_machine method, strip and title case to
+##add employee method, minor output formatting changes for consistancy.
+##Tested that works: Adding employee (all initial fields), removing employee, calling edit_employee menu from main menu, going back to main menu from editor>
+##-------------------------------------------------##
 
 import datetime
 import shelve
@@ -20,8 +22,8 @@ import os
 
 
 class Employee():
-    def __init__(self, last_name, first_name, employee_number, hire_date, max_vacation=12):
-        self.employee_ID=employee_number
+    def __init__(self, last_name, first_name, employee_id, hire_date, max_vacation=12):
+        self.employee_id=employee_id
         self.first_name=first_name
         self.last_name=last_name
         self.hire_date=hire_date
@@ -34,10 +36,10 @@ class Employee():
         new_last_name=input("Please enter the new Last Name: ")
         self.last_name=new_last_name.strip().title()
 
-    def rename_first_name(self):
-        '''Allows you to change the first name of an employee'''
-        new_first_name=input("Please enter the new First Name: ")
-        self.first_name=new_first_name.strip().title()
+    #def rename_first_name(self):
+    #    '''Allows you to change the first name of an employee'''
+    #    new_first_name=input("Please enter the new First Name: ")
+    #    self.first_name=new_first_name.strip().title()
 
 
     def add_vacation_day(self):
@@ -54,11 +56,13 @@ class Employee():
         self.remaining_vacation -=1
 
     def remove_vacation_day(self):
-        '''Manually decreases basline and available vacation by -1'''
+        '''Manually decreases baseline and available vacation by -1'''
         self.max_vacation -=1
         self.remaining_vacation -=1
 
     def check_dates(self, start_date):
+        '''Does a date check on program launch, and at one year will
+        add one day to the maximum vacation'''
         today=datetime.date.today()
         temp_date= self.hire_date
         temp_date.year=today.year
@@ -67,7 +71,8 @@ class Employee():
             self.remaining_vacation = self.max_vacation
 
     def __str__(self):
-        print("Employee Number: ", self.employee_number)
+        '''returns object properties when asked to define itself'''
+        print("Employee Number: ", self.employee_id)
         print("First Name:", self.first_name)
         print("Last Name:", self.last_name)
         print("Hire Date:", self.hire_date)
@@ -76,12 +81,15 @@ class Employee():
         print("Vacation Days Remaining this year:", self.remaining_vacation)
 
 
+
 class DumbassError(Exception):
     pass
 
 
 class VacationManager():
+    '''Manages the employee data objects'''
     def __init__(self):
+        '''initiates file and opens it if already available'''
         if os.path.exists('cicd_info.db.dat'):
             s = shelve.open('cicd_info.db')
             try:
@@ -94,40 +102,44 @@ class VacationManager():
             self.machine = {}
 
     def save(self):
+        '''saves data and closes file'''
         s = shelve.open('cicd_info.db')
         s['machine_dict'] = self.machine
         s.close()
 
     def add_employee(self):
-        first_name = input('Please enter employee first name:\n')
-        last_name = input('Please enter employee last name:\n')
+        '''Adds an employee'''
+        first_name = input('Please enter Employee First Name:\n').strip().title()
+        last_name = input('Please enter Employee Last Name:\n').strip().title()
         try:
-            employee_id = int(input('Please enter employee id number:\n'))
+            employee_id = int(input('Please enter an Employee ID Number:\n'))
         except ValueError:
             print('Please make sure employee number is a valid integer value.')
             try:
-                employee_id = int(input('Please enter employee id number:\n'))
+                employee_id = int(input('Please enter Employee ID Number:\n'))
             except:
                 print('Dude... no.')
                 raise DumbassError
         print("Please enter the start date of the new Employee:\n")
         hire_date = self.get_date()
-        cog = Employee(last_name=last_name, first_name=first_name, employee_number=employee_id, hire_date=hire_date)
-        self.machine.update({cog.employee_ID: cog})
+        cog = Employee(last_name=last_name, first_name=first_name, employee_id=employee_id, hire_date=hire_date)
+        self.machine.update({cog.employee_id: cog})
         self.save()
 
 
 
     def set_vacation_dates(self, employee_id):
+        '''allows you to add employee vacation dates'''
         date_list = []
         while True:
-            if input('Break? yes/no').lower()== 'yes':
+            if input('Type "Stop" when you are finished entering dates').lower()== 'stop':
                 break
             date_list.append(self.get_date())
         self.machine[employee_id].dates_of_vacation.extend(date_list)
         self.save()
 
     def set_hire_date(self, employee_id):
+        '''sets the date of hire for the employee'''
         self.machine[employee_id].hire_date = self.get_date()
         self.save()
 
@@ -188,6 +200,7 @@ class VacationManager():
 
     @staticmethod
     def get_date():
+        '''this is a date input validation method'''
         day=None
         month=None
         year=None
@@ -226,7 +239,7 @@ class VacationManager():
         while(True):#start of year block
             value_3 = input('Enter the year e.g. "2016": ')
             if not len(value_3) == 4:
-                print("Please enter two digits \n")
+                print("Please enter four digits \n")
             else:
                 try:
                     year=int(value_3)
@@ -241,14 +254,18 @@ class VacationManager():
         return (new_date)
 
     def remove_employee(self, employee_id):
-        del self.machine[int(input ('Please enter the Employee ID for the Employee you would like to remove: '))]
+        '''removes an employee'''
+        #add error handling if an invalid ID is entered or non valid integer
+        del self.machine[int(input ('Please enter the Employee ID of the Employee you would like to remove: '))]
         self.save()
 
     def display_machine(self):
+        '''display employee ID and employee info'''
         for key,value in self.machine.items():
             print (value)
 
     def main_menu(self):
+        '''Main User Interface'''
         choice = None
         while choice != 'exit':
             choice = input('''
@@ -264,13 +281,13 @@ Exit:\tExit menu.
 ''').strip()
 
             if choice == '1':
-                for k, v in self.machine:
-                    print (k, v.last_name, v.first_name)
+                for k, v in self.machine.items(): #added.items() so that the employee ID's would iterate
+                    print ("ID #: ",k,"\nLast Name, First Name: ", v.last_name,",", v.first_name)
             elif choice == '2':
                 self.display_machine()
             elif choice == '3':
-                employee_id=int(input("Type an employee id from the list to modify their information: "))
-                self.edit_employee_menu(empoyee_id=employee_id)
+                employee_id=int(input("Type an Employee ID from the list to modify their information: ").strip())
+                self.edit_employee_menu(employee_id)
             elif choice == '4':
                 self.add_employee()
             elif choice == 'exit':
@@ -279,6 +296,7 @@ Exit:\tExit menu.
                 print ('I\'m sorry Dave, I can\'t do that')
 
     def edit_employee_menu(self, employee_id):
+        '''interface allowing user to manipulate a selected employee object'''
         choice= None
         while choice != "back":
             choice = input('''
@@ -296,10 +314,11 @@ What would you like to do with this employee?
 Back:\t Back to Main menu.
 ------------------------------------
 
-''').strip()
+''').strip().lower()
 
             if choice == '1':
-                self.display_employee_info(employee_id=employee_id)
+                 #how to get this to display cog object info??
+                print ("I'm not ready yet")
             elif choice == '2':
                 self.set_vacation_dates(employee_id=employee_id)
             elif choice == '3':
@@ -322,10 +341,8 @@ Back:\t Back to Main menu.
                 print ('I\'m sorry Dave, I can\'t do that')
 
 
-
-
-
-
+vm = VacationManager()
+vm.main_menu()
 
 
 
