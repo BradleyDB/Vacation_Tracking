@@ -10,9 +10,10 @@
 ##<bbazhaw, 12-27-2016, changed sub_menu_1 to static method, renamed 'Employee' variable to 'cog', changed method parameters, added new class 'employee_manifest'>
 ##<bbazhaw & DrewSauce>, 01-08-2016, abstracted what are now set_vacation_dates and get_date, added set_hire_date, changed Employee obj __str__,
 ##other minor functional improvements, data shelving, ability to create employee obj, dict to hold employee obj, cleaned up menues>
-##<bbazhaw, 01/14/2017, added instance of VacationManager so that program can be called, added .items() to display_machine method, strip and title case to
+##<bbazhaw, 01-14-2017, added instance of VacationManager so that program can be called, added .items() to display_machine method, strip and title case to
 ##add employee method, minor output formatting changes for consistancy.
 ##Tested that works: Adding employee (all initial fields), removing employee, calling edit_employee menu from main menu, going back to main menu from editor>
+##<bbazhaw, 01-16-2017, made functional updates to submenu after testing. Options 3,5,7-9 in edit_employee_menu() are functioning.>
 ##-------------------------------------------------##
 
 import datetime
@@ -28,18 +29,19 @@ class Employee():
         self.last_name=last_name
         self.hire_date=hire_date
         self.max_vacation=max_vacation
-        self.dates_of_vacation=[]
+        self.dates_of_vacation= []
         self.remaining_vacation=max_vacation
 
 
     def rename_last_name(self):
+        '''Allows you to change the last name of an employee'''
         new_last_name=input("Please enter the new Last Name: ")
         self.last_name=new_last_name.strip().title()
 
-    #def rename_first_name(self):
-    #    '''Allows you to change the first name of an employee'''
-    #    new_first_name=input("Please enter the new First Name: ")
-    #    self.first_name=new_first_name.strip().title()
+    def rename_first_name(self):
+        '''Allows you to change the first name of an employee'''
+        new_first_name=input("Please enter the new First Name: ")
+        self.first_name=new_first_name.strip().title()
 
 
     def add_vacation_day(self):
@@ -132,11 +134,12 @@ class VacationManager():
         '''allows you to add employee vacation dates'''
         date_list = []
         while True:
-            if input('Type "Stop" when you are finished entering dates').lower()== 'stop':
+            if input('Type "Stop" when you are finished entering dates ').strip().lower()== 'stop':
                 break
             date_list.append(self.get_date())
         self.machine[employee_id].dates_of_vacation.extend(date_list)
         self.save()
+
 
     def set_hire_date(self, employee_id):
         '''sets the date of hire for the employee'''
@@ -298,6 +301,7 @@ Exit:\tExit menu.
     def edit_employee_menu(self, employee_id):
         '''interface allowing user to manipulate a selected employee object'''
         choice= None
+        cog = self.machine[employee_id]
         while choice != "back":
             choice = input('''
 ------------------------------------
@@ -317,23 +321,23 @@ Back:\t Back to Main menu.
 ''').strip().lower()
 
             if choice == '1':
-                 #how to get this to display cog object info??
+                #how to get this to display cog object info??
                 print ("I'm not ready yet")
-            elif choice == '2':
+            elif choice == '2':#takes the input but does not add to any list
                 self.set_vacation_dates(employee_id=employee_id)
-            elif choice == '3':
-                self.add_vacation_day(employee_id=employee_id)
+            elif choice == '3':#working
+                cog.add_vacation_day()
             elif choice == '4':
-                self.add_temp_vacation_day(employee_id=employee_id)
-            elif choice == '5':
-                self.remove_vacation_day(employee_id=employee_id)
+                cog.add_temp_vacation_day()
+            elif choice == '5': #working
+                cog.remove_vacation_day()
             elif choice == '6':
-                self.remove_temp_vacation_day(employee_id=employee_id)
-            elif choice == '7':
-                self.rename_last_name(employee_id=employee_id)
-            elif choice == '8':
-                self.rename_first_name(employee_id=employee_id)
-            elif choice == '9':
+                cog.remove_temp_vacation_day()
+            elif choice == '7':#working
+                cog.rename_last_name()
+            elif choice == '8':#working
+                cog.rename_first_name()
+            elif choice == '9':#working
                 self.remove_employee(employee_id=employee_id)
             elif choice == 'back':
                 self.main_menu()
