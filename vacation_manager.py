@@ -10,9 +10,12 @@
 ##<bbazhaw, 12-27-2016, changed sub_menu_1 to static method, renamed 'Employee' variable to 'cog', changed method parameters, added new class 'employee_manifest'>
 ##<bbazhaw & DrewSauce>, 01-08-2016, abstracted what are now set_vacation_dates and get_date, added set_hire_date, changed Employee obj __str__,
 ##other minor functional improvements, data shelving, ability to create employee obj, dict to hold employee obj, cleaned up menues>
-##<bbazhaw, 01/14/2017, added instance of VacationManager so that program can be called, added .items() to display_machine method, strip and title case to
+##<bbazhaw, 01-14-2017, added instance of VacationManager so that program can be called, added .items() to display_machine method, strip and title case to
 ##add employee method, minor output formatting changes for consistancy.
 ##Tested that works: Adding employee (all initial fields), removing employee, calling edit_employee menu from main menu, going back to main menu from editor>
+##<bbazhaw, 01-16-2017, made functional updates to submenu after testing. Options 3,5,7-9 in edit_employee_menu() are functioning.
+##migrated methods from Employee class to manager class so they would save properly (also added self.save(), re-corrected edit_employee_menu() to match
+##changed remove_employee method to not prompt user again for input, but to delete selected employee>
 ##-------------------------------------------------##
 
 import datetime
@@ -28,24 +31,20 @@ class Employee():
         self.last_name=last_name
         self.hire_date=hire_date
         self.max_vacation=max_vacation
-        self.dates_of_vacation=[]
+        self.dates_of_vacation= []
         self.remaining_vacation=max_vacation
 
 
-    def rename_last_name(self):
-        new_last_name=input("Please enter the new Last Name: ")
-        self.last_name=new_last_name.strip().title()
+    #def rename_last_name(self):
+    #    '''Allows you to change the last name of an employee'''
+    #    new_last_name=input("Please enter the new Last Name: ")
+    #    self.last_name=new_last_name.strip().title()
 
     #def rename_first_name(self):
     #    '''Allows you to change the first name of an employee'''
     #    new_first_name=input("Please enter the new First Name: ")
     #    self.first_name=new_first_name.strip().title()
 
-
-    def add_vacation_day(self):
-        '''Manually increases baseline and available vacation by +1'''
-        self.max_vacation +=1
-        self.remaining_vacation +=1
 
     def add_temp_vacation_day(self):
         '''Manually increases available vacation for that year by +1'''
@@ -55,12 +54,7 @@ class Employee():
         '''Manually decreases available vacation for that year by -1'''
         self.remaining_vacation -=1
 
-    def remove_vacation_day(self):
-        '''Manually decreases baseline and available vacation by -1'''
-        self.max_vacation -=1
-        self.remaining_vacation -=1
-
-    def check_dates(self, start_date):
+    def check_dates(self, start_date): #will probably need to move down to manager as well
         '''Does a date check on program launch, and at one year will
         add one day to the maximum vacation'''
         today=datetime.date.today()
@@ -80,11 +74,8 @@ class Employee():
         print("Dates of Vacation Taken this year:", self.dates_of_vacation.sort(reverse=True)[0:20])
         print("Vacation Days Remaining this year:", self.remaining_vacation)
 
-
-
 class DumbassError(Exception):
     pass
-
 
 class VacationManager():
     '''Manages the employee data objects'''
@@ -132,15 +123,50 @@ class VacationManager():
         '''allows you to add employee vacation dates'''
         date_list = []
         while True:
-            if input('Type "Stop" when you are finished entering dates').lower()== 'stop':
+            if input('Type "Stop" when you are finished entering dates ').strip().lower()== 'stop':
                 break
             date_list.append(self.get_date())
         self.machine[employee_id].dates_of_vacation.extend(date_list)
         self.save()
 
+
     def set_hire_date(self, employee_id):
         '''sets the date of hire for the employee'''
         self.machine[employee_id].hire_date = self.get_date()
+        self.save()
+
+    def rename_last_name(self, employee_id): #change now persists
+        '''Allows you to change the last name of an employee'''
+        new_last_name=input("Please enter the new Last Name: ").strip().title()
+        self.machine[employee_id].last_name=new_last_name
+        self.save()
+
+    def rename_first_name(self, employee_id): #change now persists
+        '''Allows you to change the first name of an employee'''
+        new_first_name=input("Please enter the new First Name: ")
+        self.machine[employee_id].first_name=new_first_name.strip().title()
+        self.save()
+
+    def add_vacation_day(self, employee_id): #change now persists
+        '''Manually increases baseline and available vacation by +1'''
+        self.machine[employee_id].max_vacation +=1
+        self.machine[employee_id].remaining_vacation +=1
+        self.save()
+
+    #def add_temp_vacation_day(self, employee_id):
+    #    '''Manually increases available vacation for that year by +1'''
+    #    self.machine[employee_id].remaining_vacation +=1
+    #   self.save()
+    #removing immediate above and below until tested
+    #def remove_temp_vacation_day(self, employee_id):
+    #    '''Manually decreases available vacation for that year by -1'''
+    #    self.machine[employee_id].remaining_vacation -=1
+    #    self.save()
+
+    def remove_vacation_day(self, employee_id):
+        '''Manually decreases baseline and available vacation by -1'''
+        self.machine[employee_id].max_vacation -=1
+        self.machine[employee_id].remaining_vacation -=1
         self.save()
 
         # #print("Enter in each day of vacation one at a time: \n")
@@ -256,7 +282,8 @@ class VacationManager():
     def remove_employee(self, employee_id):
         '''removes an employee'''
         #add error handling if an invalid ID is entered or non valid integer
-        del self.machine[int(input ('Please enter the Employee ID of the Employee you would like to remove: '))]
+        #del self.machine[int(input ('Please enter the Employee ID of the Employee you would like to remove: '))]
+        del self.machine[employee_id]
         self.save()
 
     def display_machine(self):
@@ -273,7 +300,7 @@ class VacationManager():
 Please make a selection.
 1:\tDisplay List of Employee ID Numbers and Names
 2:\tDisplay Vacation info for all Employees
-3:\tEdit Existing Employee Information
+3:\tManage Existing Employee Information
 4:\tAdd a New Employee
 Exit:\tExit menu.
 ------------------------------------
@@ -282,11 +309,11 @@ Exit:\tExit menu.
 
             if choice == '1':
                 for k, v in self.machine.items(): #added.items() so that the employee ID's would iterate
-                    print ("ID #: ",k,"\nLast Name, First Name: ", v.last_name,",", v.first_name)
+                    print ("ID #: ",k,"\nLast Name: ", v.last_name, "\nFirst Name: ", v.first_name)
             elif choice == '2':
                 self.display_machine()
             elif choice == '3':
-                employee_id=int(input("Type an Employee ID from the list to modify their information: ").strip())
+                employee_id=int(input("Type an Employee ID from the list to see your options: ").strip())
                 self.edit_employee_menu(employee_id)
             elif choice == '4':
                 self.add_employee()
@@ -298,6 +325,7 @@ Exit:\tExit menu.
     def edit_employee_menu(self, employee_id):
         '''interface allowing user to manipulate a selected employee object'''
         choice= None
+        cog = self.machine[employee_id]
         while choice != "back":
             choice = input('''
 ------------------------------------
@@ -310,31 +338,32 @@ What would you like to do with this employee?
 6:\tManually decrease available vacation (current year only)
 7:\tChange Employee Last Name
 8:\tChange Employee First Name
-9:\tDelete Existing Employee
+9:\tDelete This Employee
 Back:\t Back to Main menu.
 ------------------------------------
 
 ''').strip().lower()
 
-            if choice == '1':
-                 #how to get this to display cog object info??
-                print ("I'm not ready yet")
-            elif choice == '2':
+            if choice == '1': #almost works except for vacation days list!!!
+                print (cog)
+                #print ("I'm not ready yet")
+            elif choice == '2':#takes the input but does not add to any list
                 self.set_vacation_dates(employee_id=employee_id)
-            elif choice == '3':
+            elif choice == '3':#working
                 self.add_vacation_day(employee_id=employee_id)
             elif choice == '4':
                 self.add_temp_vacation_day(employee_id=employee_id)
-            elif choice == '5':
+            elif choice == '5': #working
                 self.remove_vacation_day(employee_id=employee_id)
             elif choice == '6':
                 self.remove_temp_vacation_day(employee_id=employee_id)
-            elif choice == '7':
+            elif choice == '7':#working
                 self.rename_last_name(employee_id=employee_id)
-            elif choice == '8':
+            elif choice == '8':#working
                 self.rename_first_name(employee_id=employee_id)
-            elif choice == '9':
+            elif choice == '9':#working
                 self.remove_employee(employee_id=employee_id)
+                self.main_menu()
             elif choice == 'back':
                 self.main_menu()
             else:
